@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LENA Live Vote — Supply Chain AI</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <style>
@@ -277,7 +278,7 @@
           <div class="qr-corner tr"></div>
           <div class="qr-corner bl"></div>
           <div class="qr-corner br"></div>
-          <canvas id="qr-canvas" width="420" height="420"></canvas>
+          <div id="qr-canvas"></div>
         </div>
       </div>
 
@@ -326,127 +327,7 @@ const SCENARIOS = [
   { id: "C", name: "BioPharm Solutions",   loc: "Grimsby, Lincolnshire",          color: "#00bcd4", glow: "rgba(0,188,212,0.3)",  tag: "Demand Spike" },
 ];
 
-// ── QR Code generator (minimal, self-contained) ───────────────────────────────
-function drawQR(canvas, text) {
-  try {
-    const matrix = buildQR(text);
-    const size = canvas.width;
-    const cells = matrix.length;
-    const cell = size / cells;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, size, size);
-    ctx.fillStyle = "#005591";
-    for (let r = 0; r < cells; r++) {
-      for (let c = 0; c < cells; c++) {
-        if (matrix[r][c]) {
-          const x = c * cell, y = r * cell, rad = cell * 0.15;
-          ctx.beginPath();
-          ctx.moveTo(x + rad, y);
-          ctx.lineTo(x + cell - rad, y);
-          ctx.quadraticCurveTo(x + cell, y, x + cell, y + rad);
-          ctx.lineTo(x + cell, y + cell - rad);
-          ctx.quadraticCurveTo(x + cell, y + cell, x + cell - rad, y + cell);
-          ctx.lineTo(x + rad, y + cell);
-          ctx.quadraticCurveTo(x, y + cell, x, y + cell - rad);
-          ctx.lineTo(x, y + rad);
-          ctx.quadraticCurveTo(x, y, x + rad, y);
-          ctx.closePath();
-          ctx.fill();
-        }
-      }
-    }
-  } catch (e) {
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#005591";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 18px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("QR", canvas.width / 2, canvas.height / 2);
-  }
-}
-
-function buildQR(data) {
-  const SIZE = 25;
-  const bytes = new TextEncoder().encode(data);
-  let bits = [];
-  const push = (v, n) => { for (let i = n-1; i >= 0; i--) bits.push((v >> i) & 1); };
-  push(0b0100, 4); push(bytes.length, 8);
-  for (const b of bytes) push(b, 8);
-  for (let i = 0; i < 4 && bits.length < 128; i++) bits.push(0);
-  while (bits.length % 8) bits.push(0);
-  const DATA_CW = 28, pads = [0xEC, 0x11]; let pi = 0;
-  while (bits.length < DATA_CW * 8) push(pads[pi++ % 2], 8);
-  const cws = [];
-  for (let i = 0; i < bits.length; i += 8) {
-    let v = 0; for (let j = 0; j < 8; j++) v = (v << 1) | (bits[i+j]||0); cws.push(v);
-  }
-  const ECC_CW = 16, ecc = reedSolomon(cws.slice(0, DATA_CW), ECC_CW);
-  const all = [...cws.slice(0, DATA_CW), ...ecc];
-  const mod = Array.from({length: SIZE}, () => new Array(SIZE).fill(-1));
-  function finder(r, c) {
-    for (let dr = -1; dr <= 7; dr++) for (let dc = -1; dc <= 7; dc++) {
-      const row = r+dr, col = c+dc;
-      if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) continue;
-      const onB = dr===0||dr===6||dc===0||dc===6, inI = dr>=2&&dr<=4&&dc>=2&&dc<=4;
-      mod[row][col] = (dr===-1||dc===-1||dr===7||dc===7) ? 0 : ((onB||inI)?1:0);
-    }
-  }
-  finder(0,0); finder(0,SIZE-7); finder(SIZE-7,0);
-  for (let i = 8; i < SIZE-8; i++) mod[6][i] = mod[i][6] = i%2===0?1:0;
-  mod[17][8] = 1;
-  const dataBits = [];
-  const push2 = (arr, v, n) => { for (let i=n-1;i>=0;i--) arr.push((v>>i)&1); };
-  for (const cw of all) push2(dataBits, cw, 8);
-  let bi = 0;
-  for (let right = SIZE-1; right >= 1; right -= 2) {
-    if (right === 6) right = 5;
-    for (let vert = 0; vert < SIZE; vert++) {
-      const row = (Math.floor((SIZE-1-right)/2)%2===0) ? SIZE-1-vert : vert;
-      for (let delta = 0; delta <= 1; delta++) {
-        const col = right - delta;
-        if (row<0||row>=SIZE||col<0||col>=SIZE) continue;
-        if (mod[row][col] === -1) {
-          const bit = bi < dataBits.length ? dataBits[bi++] : 0;
-          mod[row][col] = ((row+col)%2===0) ? (bit^1) : bit;
-        }
-      }
-    }
-  }
-  for (let r=0;r<SIZE;r++) for (let c=0;c<SIZE;c++) if (mod[r][c]===-1) mod[r][c]=0;
-  const FMT = [1,0,1,0,1,0,0,0,0,0,1,0,0,1,0];
-  const fp1 = [[8,0],[8,1],[8,2],[8,3],[8,4],[8,5],[8,7],[8,8],[7,8],[5,8],[4,8],[3,8],[2,8],[1,8],[0,8]];
-  const fp2 = [[SIZE-1,8],[SIZE-2,8],[SIZE-3,8],[SIZE-4,8],[SIZE-5,8],[SIZE-6,8],[SIZE-7,8],[8,SIZE-8],[8,SIZE-7],[8,SIZE-6],[8,SIZE-5],[8,SIZE-4],[8,SIZE-3],[8,SIZE-2],[8,SIZE-1]];
-  for (let i=0;i<15;i++) {
-    const [r1,c1]=fp1[i], [r2,c2]=fp2[i];
-    if (r1<SIZE&&c1<SIZE) mod[r1][c1]=FMT[i];
-    if (r2<SIZE&&c2<SIZE) mod[r2][c2]=FMT[i];
-  }
-  return mod.map(row => row.map(v => v===1));
-}
-
-function gfMul(a,b){
-  if(!a||!b)return 0;
-  const E=new Array(512),L=new Array(256);let x=1;
-  for(let i=0;i<255;i++){E[i]=x;L[x]=i;x<<=1;if(x&256)x^=0x11d;}
-  for(let i=255;i<512;i++)E[i]=E[i-255];
-  return E[(L[a]+L[b])%255];
-}
-function reedSolomon(data,eccCount){
-  const G=[1],E=new Array(512),L=new Array(256);let v=1;
-  for(let i=0;i<255;i++){E[i]=v;L[v]=i;v<<=1;if(v&256)v^=0x11d;}
-  for(let i=255;i<512;i++)E[i]=E[i-255];
-  for(let i=0;i<eccCount;i++){
-    const f=[1,E[i]],r=new Array(G.length+f.length-1).fill(0);
-    for(let j=0;j<G.length;j++)for(let k=0;k<f.length;k++)r[j+k]^=gfMul(G[j],f[k]);
-    G.splice(0,G.length,...r);
-  }
-  const msg=[...data,...new Array(eccCount).fill(0)];
-  for(let i=0;i<data.length;i++){const co=msg[i];if(co)for(let j=1;j<G.length;j++)msg[i+j]^=gfMul(G[j],co);}
-  return msg.slice(data.length);
-}
+// ── QR Code generator will use qrcode.js ─────────────────────────────────────
 
 // ── Build static DOM ─────────────────────────────────────────────────────────
 const VOTE_URL = () => `https://voting-gyiz.onrender.com/vote`;
@@ -584,7 +465,14 @@ document.getElementById("btn-launch").addEventListener("click", () => {
 // ── Init ─────────────────────────────────────────────────────────────────────
 buildUI();
 const voteUrl = VOTE_URL();
-drawQR(document.getElementById("qr-canvas"), voteUrl);
+new QRCode(document.getElementById("qr-canvas"), {
+  text: voteUrl,
+  width: 320,
+  height: 320,
+  colorDark : "#005591",
+  colorLight : "#ffffff",
+  correctLevel : QRCode.CorrectLevel.L
+});
 connect();
 </script>
 </body>
