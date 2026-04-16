@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 // ── In-memory vote state ──────────────────────────────────────────────────────
-let state = { A: 0, B: 0, C: 0, closed: false };
+let state = { A: 0, B: 0, C: 0, closed: false, launched: false, launchUrl: "" };
 
 // Track voted session IDs to prevent double-voting
 const votedSessions = new Set();
@@ -49,8 +49,14 @@ wss.on("connection", (ws) => {
         break;
       }
       case "reset": {
-        state = { A: 0, B: 0, C: 0, closed: false };
+        state = { A: 0, B: 0, C: 0, closed: false, launched: false, launchUrl: "" };
         votedSessions.clear();
+        broadcast({ type: "state", state });
+        break;
+      }
+      case "launch": {
+        state.launched = true;
+        state.launchUrl = msg.url || "";
         broadcast({ type: "state", state });
         break;
       }
@@ -61,10 +67,11 @@ wss.on("connection", (ws) => {
 // ── Serve static files ────────────────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "public")));
 
-// ── Fallback for SPA-like routing ─────────────────────────────────────────────
-app.get("/vote", (req, res) => res.sendFile(path.join(__dirname, "public", "vote.html")));
-app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
+// ── Routes ────────────────────────────────────────────────────────────────────
+app.get("/vote",    (req, res) => res.sendFile(path.join(__dirname, "public", "vote.html")));
+app.get("/admin",   (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
+app.get("/display", (req, res) => res.sendFile(path.join(__dirname, "public", "display.html")));
+app.get("/",        (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

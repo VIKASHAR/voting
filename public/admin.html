@@ -3,444 +3,409 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LENA Live Vote — Supply Chain AI</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>Admin — LENA Supply Chain Vote</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #f8fafc;
-      --surface:   #ffffff;
-      --card:      #ffffff;
-      --border:    rgba(0,0,0,0.1);
-      --muted:     rgba(0,0,0,0.04);
-      --text:      #0f172a;
-      --sub:       rgba(15,23,42,0.6);
-      --blue:      #005591;
-      --cyan:      #00bcd4;
-      --amber:     #f59e0b;
-      --red:       #ef4444;
-      --green:     #22c55e;
-      --blue-glow: rgba(0,85,145,0.35);
-      --cyan-glow: rgba(0,188,212,0.35);
-      --red-glow:  rgba(239,68,68,0.35);
+      --bg:      #f1f5f9;
+      --surface: #ffffff;
+      --card:    #ffffff;
+      --border:  rgba(0,0,0,0.09);
+      --muted:   rgba(0,0,0,0.05);
+      --text:    #0f172a;
+      --sub:     rgba(15,23,42,0.52);
+      --blue:    #005591;
+      --cyan:    #00bcd4;
+      --amber:   #f59e0b;
+      --red:     #ef4444;
+      --green:   #22c55e;
     }
 
     body {
       background: var(--bg);
       color: var(--text);
       font-family: "DM Sans", "Segoe UI", sans-serif;
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    /* ── Panel ── */
+    .panel {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.1);
+      position: relative;
     }
 
     /* ── Header ── */
-    header {
-      background: var(--surface);
+    .panel-header {
+      padding: 24px 28px 18px;
       border-bottom: 1px solid var(--border);
-      padding: 14px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: linear-gradient(135deg, #005591 0%, #00bcd4 100%);
     }
-    .logo { display: flex; align-items: center; gap: 12px; }
-    .logo-badge {
-      width: 36px; height: 36px;
-      background: var(--blue);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 20px; color: #fff;
+    .logo-text {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      color: #fff;
     }
-    .logo-text { font-weight: 700; font-size: 17px; letter-spacing: 0.04em; }
-    .logo-text span { font-weight: 300; opacity: 0.6; }
-    .divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
-    .header-sub { font-size: 12px; opacity: 0.55; }
-    .status-pill {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; font-family: monospace; opacity: 0.7;
-    }
-    .pulse {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--green);
-      animation: pulse 2s infinite;
-    }
-    .pulse.closed { background: var(--amber); animation: none; }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
+    .logo-text span { opacity: 0.8; font-weight: 400; }
+    .admin-badge {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.3);
     }
 
-    /* ── Title bar ── */
-    .title-bar { text-align: center; padding: 28px 24px 16px; }
-    .eyebrow {
-      font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
-      text-transform: uppercase; color: var(--cyan); margin-bottom: 6px;
-    }
-    .title-bar h1 { font-size: 28px; font-weight: 900; line-height: 1.1; }
-    .title-bar p { font-size: 13px; margin-top: 6px; color: var(--sub); }
-
-    /* ── Main grid ── */
-    .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 24px 32px; min-height: 0; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      overflow: hidden;
-      width: 100%;
-      max-width: 920px;
-      max-height: 100%;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.06);
-    }
-    .grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--border); }
-
-    /* ── Left QR panel ── */
-    .qr-panel {
-      padding: 36px 32px;
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      background: var(--muted);
-      overflow: hidden;
-    }
-    .qr-panel h2 { font-size: 22px; font-weight: 900; }
-    .qr-wrap {
-      position: relative;
-      background: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      border: 3px solid var(--cyan);
-      box-shadow: 0 0 32px var(--cyan-glow);
-      max-width: 100%;
-      max-height: 100%;
+    /* ── Status bar ── */
+    .status-bar {
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      justify-content: center;
-      aspect-ratio: 1/1;
+      gap: 10px;
+      background: var(--surface);
     }
-    .qr-corner {
-      position: absolute; width: 18px; height: 18px;
-      border-color: var(--blue); border-style: solid;
+    .status-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
     }
-    .qr-corner.tl { top: -2px; left: -2px; border-width: 4px 0 0 4px; }
-    .qr-corner.tr { top: -2px; right: -2px; border-width: 4px 4px 0 0; }
-    .qr-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 4px 4px; }
-    .qr-corner.br { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; }
-    canvas { display: block; image-rendering: pixelated; max-width: 100%; max-height: 100%; object-fit: contain; }
-
-    .vote-url-box {
-      width: 100%;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 16px;
-      font-family: monospace; font-size: 12px; font-weight: 600;
-      color: var(--cyan);
-      text-align: center; word-break: break-all;
-    }
-    .vote-url-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sub); margin-bottom: 4px; text-align: center; }
-
-    .live-badge {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 16px; border-radius: 99px;
-      font-size: 11px; font-weight: 700;
-      background: rgba(34,197,94,0.12); color: var(--green);
-    }
-    .live-badge.closed { background: rgba(245,158,11,0.12); color: var(--amber); }
-
-    .legend { width: 100%; border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
-    .legend-item { display: flex; align-items: center; gap: 10px; }
-    .legend-avatar {
-      width: 24px; height: 24px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 11px; color: #fff; flex-shrink: 0;
-    }
-    .legend-name { font-size: 12px; font-weight: 600; }
-    .legend-loc { font-size: 10px; color: var(--sub); }
-
-    /* ── Right results panel ── */
-    .results-panel { padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
-    .results-header { display: flex; align-items: center; justify-content: space-between; }
-    .results-header h2 { font-size: 22px; font-weight: 900; }
-    .total-count { font-size: 28px; font-weight: 900; font-family: monospace; }
-    .total-label { font-size: 11px; color: var(--sub); font-weight: 500; }
-
-    .scenario-card {
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px;
-      transition: border-color 0.4s, box-shadow 0.4s, background 0.4s;
-    }
-    .scenario-card.winner {
-      animation: winner-glow 1.2s ease forwards;
-    }
-    @keyframes winner-glow {
-      from { border-color: var(--border); }
+    .status-dot.closed  { background: var(--amber); animation: none; }
+    .status-dot.offline { background: var(--red);   animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .status-text { font-size: 13px; font-weight: 600; color: var(--sub); }
+    .status-text strong { color: var(--text); }
+    .total-pill {
+      margin-left: auto;
+      background: rgba(0,85,145,0.08);
+      border: 1px solid rgba(0,85,145,0.15);
+      border-radius: 99px;
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--blue);
     }
 
-    .sc-row { display: flex; align-items: center; gap: 12px; }
-    .sc-avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 18px; color: #fff; flex-shrink: 0;
-    }
-    .sc-info { flex: 1; min-width: 0; }
-    .sc-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
-    .sc-name { font-weight: 700; font-size: 14px; }
-    .winner-badge {
-      font-size: 9px; font-weight: 900; letter-spacing: 0.08em;
-      text-transform: uppercase; padding: 2px 8px; border-radius: 99px;
-      color: #fff; animation: pulse 1s infinite;
-      display: none;
-    }
-    .sc-loc { font-size: 11px; color: var(--sub); }
-    .sc-count { font-weight: 900; font-size: 26px; font-family: monospace; flex-shrink: 0; }
-    .sc-pct { font-size: 12px; font-weight: 700; font-family: monospace; margin-bottom: 6px; }
-    .bar-track { height: 10px; border-radius: 99px; overflow: hidden; background: var(--muted); }
-    .bar-fill { height: 100%; border-radius: 99px; transition: width 0.55s cubic-bezier(.4,0,.2,1); min-width: 0; }
-
-    .winner-announce {
-      border-radius: 14px; padding: 14px 16px;
-      display: flex; align-items: center; gap: 12px;
-      display: none;
-    }
-    .checkmark { font-size: 22px; flex-shrink: 0; }
-    .announce-title { font-size: 13px; font-weight: 700; }
-    .announce-sub { font-size: 11px; color: var(--sub); margin-top: 2px; }
-
-    /* ── Footer buttons ── */
-    .footer-btns {
-      display: flex; gap: 10px; align-items: center;
+    /* ── Vote tally ── */
+    .tally {
       padding: 18px 28px;
-      background: var(--muted);
-      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .tally-row { display: flex; align-items: center; gap: 12px; }
+    .tally-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900; color: #fff; flex-shrink: 0;
+    }
+    .tally-name {
+      font-size: 13px; font-weight: 600; flex: 1; min-width: 0;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color: var(--text);
+    }
+    .tally-bar-wrap { flex: 1; }
+    .tally-track { height: 8px; border-radius: 99px; background: var(--muted); overflow: hidden; }
+    .tally-fill  { height: 100%; border-radius: 99px; transition: width 0.5s ease; min-width: 0; }
+    .tally-count { font-size: 13px; font-weight: 900; font-family: monospace; flex-shrink: 0; width: 36px; text-align: right; }
+    .tally-pct   { font-size: 11px; font-weight: 700; font-family: monospace; flex-shrink: 0; width: 32px; text-align: right; color: var(--sub); }
+
+    /* ── Launch URL input ── */
+    .url-section {
+      padding: 18px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .url-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--sub); margin-bottom: 8px;
+    }
+    .url-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-family: monospace; font-size: 13px; color: var(--text);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .url-input::placeholder { color: rgba(15,23,42,0.3); }
+    .url-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0,188,212,0.12);
+    }
+
+    /* ── Action buttons ── */
+    .actions {
+      padding: 22px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--surface);
     }
     .btn {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      gap: 8px; padding: 13px 16px;
-      border: none; border-radius: 12px; cursor: pointer;
-      font-family: inherit; font-size: 14px; font-weight: 700;
+      width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; padding: 15px 20px;
+      border: none; border-radius: 14px; cursor: pointer;
+      font-family: inherit; font-size: 15px; font-weight: 700;
+      letter-spacing: 0.01em;
       transition: transform 0.12s, opacity 0.2s, box-shadow 0.2s;
     }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-    .btn-close { background: var(--green); color: #fff; box-shadow: 0 4px 14px rgba(34,197,94,0.4); }
-    .btn-close.closed { background: rgba(34,197,94,0.2); color: var(--green); box-shadow: none; }
-    .btn-reset { background: var(--blue); color: #fff; box-shadow: 0 4px 14px rgba(0,85,145,0.45); }
-    .btn-launch { background: linear-gradient(135deg, var(--blue), var(--cyan)); color: #fff; box-shadow: 0 4px 16px rgba(0,188,212,0.4); opacity: 0.4; }
-    .btn-launch.active { opacity: 1; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
 
-    /* ── WS lost banner ── */
+    .btn-close {
+      background: var(--green); color: #fff;
+      box-shadow: 0 4px 16px rgba(34,197,94,0.3);
+    }
+    .btn-close.is-closed {
+      background: rgba(34,197,94,0.1); color: var(--green);
+      border: 1px solid rgba(34,197,94,0.25); box-shadow: none;
+    }
+    .btn-reset {
+      background: var(--amber); color: #fff;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.3);
+    }
+    .btn-launch {
+      background: linear-gradient(135deg, #005591 0%, #00bcd4 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0,188,212,0.3);
+    }
+    .btn-launch:disabled {
+      background: var(--muted); color: var(--sub); box-shadow: none;
+    }
+    .btn-icon { font-size: 17px; }
+
+    /* ── Nav links ── */
+    .nav-links {
+      padding: 14px 28px 22px;
+      display: flex; gap: 8px; justify-content: center;
+      background: var(--surface);
+    }
+    .nav-link {
+      font-size: 12px; font-weight: 600; color: var(--sub);
+      text-decoration: none; padding: 6px 14px;
+      border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg);
+      transition: color 0.2s, background 0.2s, border-color 0.2s;
+    }
+    .nav-link:hover {
+      color: var(--blue); background: rgba(0,85,145,0.06);
+      border-color: rgba(0,85,145,0.2);
+    }
+
+    /* ── Launched overlay ── */
+    .launched-overlay {
+      display: none;
+      position: absolute; inset: 0;
+      background: rgba(248,250,252,0.9);
+      border-radius: 24px;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px; z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+    .launched-overlay.show { display: flex; }
+    .launched-icon  { font-size: 40px; }
+    .launched-text  { font-size: 18px; font-weight: 900; color: var(--blue); }
+    .launched-sub   { font-size: 13px; color: var(--sub); }
+
+    /* ── WS banner ── */
     #ws-lost {
-      display: none; position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
-      background: rgba(239,68,68,0.92); color: #fff; padding: 10px 22px;
-      border-radius: 99px; font-size: 13px; font-weight: 700;
+      display: none;
+      position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+      background: rgba(239,68,68,0.9); color: #fff;
+      padding: 10px 22px; border-radius: 99px; font-size: 13px; font-weight: 700;
       backdrop-filter: blur(8px); z-index: 999;
     }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
-  <div class="logo">
-    <div class="logo-text"><span>LENA</span></div>
-    <div class="divider"></div>
-    <span class="header-sub">Supply Chain AI · Live Demo</span>
+<div class="panel">
+
+  <!-- Launched overlay -->
+  <div class="launched-overlay" id="launched-overlay">
+    <div class="launched-icon">🚀</div>
+    <div class="launched-text">Supply Chain Launched!</div>
+    <div class="launched-sub">Display screen is now showing the live session</div>
+    <button class="btn btn-reset" style="margin-top:18px;width:auto;padding:10px 26px;font-size:13px" onclick="sendReset()">
+      ↺ Reset &amp; Start Over
+    </button>
   </div>
-  <div class="status-pill">
-    <span class="pulse" id="header-pulse"></span>
-    <span id="header-status">Connecting…</span>
+
+  <!-- Header -->
+  <div class="panel-header">
+    <div class="logo-text">LENA <span>Admin</span></div>
+    <div class="admin-badge">Control Panel</div>
   </div>
-</header>
 
-<!-- Title -->
-<div class="title-bar">
-  <p class="eyebrow">Audience Interaction</p>
-  <h1>Choose a Supply Chain Scenario</h1>
-  <p>Scan the QR code to vote · The winning scenario will be simulated live by LENA</p>
-</div>
-
-<!-- Main -->
-<div class="main">
-  <div class="card">
-    <div class="grid">
-
-      <!-- Left: QR -->
-      <div class="qr-panel">
-        <div class="qr-wrap">
-          <div class="qr-corner tl"></div>
-          <div class="qr-corner tr"></div>
-          <div class="qr-corner bl"></div>
-          <div class="qr-corner br"></div>
-          <div id="qr-canvas"></div>
-        </div>
-      </div>
-
-      <!-- Right: Results -->
-      <div class="results-panel">
-        <div class="results-header">
-          <h2>Live Voting Results</h2>
-          <div style="text-align:right">
-            <div class="total-label">Total</div>
-            <div class="total-count" id="total-votes">0</div>
-          </div>
-        </div>
-        <div id="scenario-list"></div>
-        <div class="winner-announce" id="winner-announce">
-          <div class="checkmark">✅</div>
-          <div>
-            <div class="announce-title" id="announce-title"></div>
-            <div class="announce-sub">Click "Launch Supply Chain" to start LENA simulation</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer-btns">
-      <button class="btn btn-close" id="btn-close">
-        <span>✓</span> Close Voting
-      </button>
-      <button class="btn btn-reset" id="btn-reset">
-        <span>↺</span> Reset Votes
-      </button>
-      <button class="btn btn-launch" id="btn-launch" disabled>
-        <span>🚀</span> Launch Supply Chain
-      </button>
-    </div>
+  <!-- Status -->
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <div class="status-text"><strong id="status-text">Connecting…</strong></div>
+    <div class="total-pill" id="total-pill">0 votes</div>
   </div>
+
+  <!-- Tally -->
+  <div class="tally" id="tally-container"></div>
+
+  <!-- Launch URL -->
+  <div class="url-section">
+    <div class="url-label">Supply Chain Launch URL</div>
+    <input type="url" class="url-input" id="launch-url"
+           placeholder="https://your-supply-chain-url.com" />
+  </div>
+
+  <!-- Buttons -->
+  <div class="actions">
+    <button class="btn btn-close" id="btn-close" disabled>
+      <span class="btn-icon">✓</span> Close Voting
+    </button>
+    <button class="btn btn-reset" id="btn-reset">
+      <span class="btn-icon">↺</span> Reset Voting
+    </button>
+    <button class="btn btn-launch" id="btn-launch" disabled>
+      <span class="btn-icon">🚀</span> Launch Supply Chain
+    </button>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav-links">
+    <a class="nav-link" href="/vote"    target="_blank">↗ Voting Page</a>
+    <a class="nav-link" href="/display" target="_blank">↗ Display Page</a>
+  </div>
+
 </div>
 
 <div id="ws-lost">⚠ Connection lost — reconnecting…</div>
 
 <script>
-// ── Scenario data ─────────────────────────────────────────────────────────────
 const SCENARIOS = [
-  { id: "A", name: "Helios Steel Works",   loc: "Scunthorpe, North Lincolnshire", color: "#005591", glow: "rgba(0,85,145,0.3)",   tag: "Facility Shutdown" },
-  { id: "B", name: "CryoMed Hospital Trust",loc: "Hull, East Yorkshire",          color: "#ef4444", glow: "rgba(239,68,68,0.3)", tag: "Weather Disruption" },
-  { id: "C", name: "BioPharm Solutions",   loc: "Grimsby, Lincolnshire",          color: "#00bcd4", glow: "rgba(0,188,212,0.3)",  tag: "Demand Spike" },
+  { id: "A", name: "Helios Steel Works",    loc: "Scunthorpe",  color: "#005591" },
+  { id: "B", name: "BioPharm Solutions",    loc: "Grimsby",     color: "#00bcd4" },
+  { id: "C", name: "CryoMed Hospital Trust",loc: "Hull",        color: "#ef4444" },
 ];
 
-// ── QR Code generator will use qrcode.js ─────────────────────────────────────
-
-// ── Build static DOM ─────────────────────────────────────────────────────────
-const VOTE_URL = () => `${location.origin}/vote`;
-
-function buildUI() {
-  // Scenario cards
-  const list = document.getElementById("scenario-list");
-  SCENARIOS.forEach(s => {
-    list.innerHTML += `<div class="scenario-card" id="sc-${s.id}" style="border-color:var(--border)">
-      <div class="sc-row">
-        <div class="sc-avatar" style="background:${s.color}">${s.id}</div>
-        <div class="sc-info">
-          <div class="sc-name-row">
-            <span class="sc-name">${s.name}</span>
-            <span class="winner-badge" id="wb-${s.id}" style="background:${s.color}">Winner</span>
-          </div>
-          <div class="sc-loc">${s.loc}</div>
-          <div class="sc-pct" id="pct-${s.id}" style="color:${s.color}">0%</div>
-          <div class="bar-track"><div class="bar-fill" id="bar-${s.id}" style="background:${s.color};width:0%"></div></div>
-        </div>
-        <div class="sc-count" id="cnt-${s.id}" style="color:${s.color}">0</div>
+// ── Build tally ───────────────────────────────────────────────────────────────
+const tally = document.getElementById("tally-container");
+SCENARIOS.forEach(s => {
+  tally.innerHTML += `
+  <div class="tally-row">
+    <div class="tally-dot" style="background:${s.color}">${s.id}</div>
+    <div class="tally-name">${s.name}</div>
+    <div class="tally-bar-wrap">
+      <div class="tally-track">
+        <div class="tally-fill" id="tf-${s.id}" style="background:${s.color};width:0%"></div>
       </div>
-    </div>`;
-  });
-}
+    </div>
+    <div class="tally-count" id="tc-${s.id}" style="color:${s.color}">0</div>
+    <div class="tally-pct"   id="tp-${s.id}">0%</div>
+  </div>`;
+});
 
-// ── Update UI from state ─────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────────────────
 let currentState = null;
-let winnerShown = false;
 
 function applyState(state) {
   currentState = state;
   const total = state.A + state.B + state.C;
 
-  document.getElementById("total-votes").textContent = total;
-  document.getElementById("header-status").textContent =
-    state.closed ? `Voting closed · ${total} votes cast` : `Live voting… ${total} cast`;
+  document.getElementById("total-pill").textContent = total === 1 ? "1 vote" : `${total} votes`;
 
-  const pulse = document.getElementById("header-pulse");
-  pulse.className = state.closed ? "pulse closed" : "pulse";
+  const dot = document.getElementById("status-dot");
+  const txt = document.getElementById("status-text");
+
+  if (state.launched) {
+    dot.className = "status-dot closed";
+    txt.textContent = "Launched — display is live";
+    document.getElementById("launched-overlay").classList.add("show");
+  } else if (state.closed) {
+    dot.className = "status-dot closed";
+    txt.textContent = `Voting closed · ${total} votes`;
+    document.getElementById("launched-overlay").classList.remove("show");
+  } else {
+    dot.className = "status-dot";
+    txt.textContent = `Voting open · ${total} votes`;
+    document.getElementById("launched-overlay").classList.remove("show");
+  }
 
   SCENARIOS.forEach(s => {
-    const v = state[s.id] ?? 0;
+    const v   = state[s.id] ?? 0;
     const pct = total > 0 ? Math.round((v / total) * 100) : 0;
-    document.getElementById("cnt-" + s.id).textContent = v;
-    document.getElementById("pct-" + s.id).textContent = pct + "%";
-    document.getElementById("bar-" + s.id).style.width = pct + "%";
+    document.getElementById("tc-" + s.id).textContent = v;
+    document.getElementById("tp-" + s.id).textContent = pct + "%";
+    document.getElementById("tf-" + s.id).style.width = pct + "%";
   });
 
-  // Buttons
-  const btnClose = document.getElementById("btn-close");
+  const btnClose  = document.getElementById("btn-close");
   const btnLaunch = document.getElementById("btn-launch");
+
   if (state.closed) {
-    btnClose.textContent = "✓ Voting Closed";
-    btnClose.disabled = true;
-    btnClose.className = "btn btn-close closed";
-    btnLaunch.disabled = false;
-    btnLaunch.className = "btn btn-launch active";
+    btnClose.innerHTML = '<span class="btn-icon">✓</span> Voting Closed';
+    btnClose.disabled  = true;
+    btnClose.className = "btn btn-close is-closed";
+    btnLaunch.disabled = state.launched;
   } else {
-    btnClose.textContent = "✓ Close Voting";
-    btnClose.disabled = total === 0;
+    btnClose.innerHTML = '<span class="btn-icon">✓</span> Close Voting';
+    btnClose.disabled  = total === 0;
     btnClose.className = "btn btn-close";
     btnLaunch.disabled = true;
-    btnLaunch.className = "btn btn-launch";
-  }
-
-  // Winner
-  if (state.closed && !winnerShown) {
-    const winner = SCENARIOS.reduce((a, b) => (state[a.id] >= state[b.id] ? a : b));
-    winnerShown = true;
-    setTimeout(() => showWinner(winner), 350);
-  }
-  if (!state.closed) {
-    winnerShown = false;
-    SCENARIOS.forEach(s => {
-      const card = document.getElementById("sc-" + s.id);
-      card.style.borderColor = "var(--border)";
-      card.style.boxShadow = "none";
-      card.style.background = "";
-      document.getElementById("wb-" + s.id).style.display = "none";
-    });
-    document.getElementById("winner-announce").style.display = "none";
   }
 }
 
-function showWinner(w) {
-  // Highlight card
-  const card = document.getElementById("sc-" + w.id);
-  card.style.borderColor = w.color;
-  card.style.boxShadow = `0 0 0 3px ${w.glow}`;
-  card.style.background = `color-mix(in srgb, ${w.color} 6%, var(--card))`;
-  document.getElementById("wb-" + w.id).style.display = "inline";
-
-  // Announce
-  const ann = document.getElementById("winner-announce");
-  ann.style.display = "flex";
-  ann.style.background = `color-mix(in srgb, ${w.color} 10%, var(--card))`;
-  ann.style.border = `1px solid color-mix(in srgb, ${w.color} 40%, transparent)`;
-  document.getElementById("announce-title").textContent =
-    `Scenario ${w.id} selected — ${w.name}`;
+// ── Actions ───────────────────────────────────────────────────────────────────
+function sendClose()  { ws?.readyState === 1 && ws.send(JSON.stringify({ type: "close" })); }
+function sendReset()  { ws?.readyState === 1 && ws.send(JSON.stringify({ type: "reset" })); }
+function sendLaunch() {
+  const url = document.getElementById("launch-url").value.trim();
+  if (!url) { document.getElementById("launch-url").focus(); return; }
+  ws?.readyState === 1 && ws.send(JSON.stringify({ type: "launch", url }));
 }
 
-// ── WebSocket connection ─────────────────────────────────────────────────────
+document.getElementById("btn-close").addEventListener("click",  sendClose);
+document.getElementById("btn-reset").addEventListener("click",  sendReset);
+document.getElementById("btn-launch").addEventListener("click", sendLaunch);
+
+// ── WebSocket ─────────────────────────────────────────────────────────────────
 let ws;
 function connect() {
   const proto = location.protocol === "https:" ? "wss:" : "ws:";
   ws = new WebSocket(`${proto}//${location.host}`);
-
-  ws.onopen = () => {
+  ws.onopen  = () => {
     document.getElementById("ws-lost").style.display = "none";
+    document.getElementById("status-dot").className  = "status-dot";
   };
   ws.onclose = () => {
     document.getElementById("ws-lost").style.display = "block";
+    document.getElementById("status-dot").className  = "status-dot offline";
     setTimeout(connect, 2000);
   };
   ws.onmessage = (e) => {
@@ -448,31 +413,6 @@ function connect() {
     if (msg.type === "state") applyState(msg.state);
   };
 }
-
-// ── Button handlers ──────────────────────────────────────────────────────────
-document.getElementById("btn-close").addEventListener("click", () => {
-  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "close" }));
-});
-document.getElementById("btn-reset").addEventListener("click", () => {
-  if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "reset" }));
-});
-document.getElementById("btn-launch").addEventListener("click", () => {
-  if (!currentState) return;
-  const winner = SCENARIOS.reduce((a, b) => (currentState[a.id] >= currentState[b.id] ? a : b));
-  window.location.href = "http://localhost:5173/supply-chain";
-});
-
-// ── Init ─────────────────────────────────────────────────────────────────────
-buildUI();
-const voteUrl = VOTE_URL();
-new QRCode(document.getElementById("qr-canvas"), {
-  text: voteUrl,
-  width: 320,
-  height: 320,
-  colorDark : "#005591",
-  colorLight : "#ffffff",
-  correctLevel : QRCode.CorrectLevel.L
-});
 connect();
 </script>
 </body>
